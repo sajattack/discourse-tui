@@ -1,0 +1,6 @@
+[package]
+name = "discourse-tui"
+version = "0.1.0"
+authors = ["Paul Sajna <paulsajna@gmail.com>"]
+
+[dependencies]
