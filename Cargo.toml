@@ -4,4 +4,7 @@ version = "0.1.0"
 authors = ["Paul Sajna <paulsajna@gmail.com>"]
 
 [dependencies]
-cursive = "0.7"
+cursive = "0.8"
+openssl = "0.10"
+reqwest = "0.8"
+
