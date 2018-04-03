@@ -1,8 +1,16 @@
+#[macro_use]
+extern crate serde_derive;
+
 extern crate cursive;
 extern crate openssl;
 extern crate reqwest;
+extern crate rand;
+extern crate serde;
+extern crate serde_json;
+extern crate base64;
 
 mod api;
+mod ui;
 
 use cursive::Cursive;
 use cursive::theme::Effect;
@@ -11,46 +19,57 @@ use cursive::views::*;
 use cursive::traits::*;
 use cursive::align::HAlign;
 
+use std::env;
+use std::fs::File;
+
+use api::PartialApi;
+use api::Api;
+
 fn main() {
-    
-    let mut siv = Cursive::new();
-    siv.load_theme_file("/home/paul/.config/discourse-tui/theme.toml");
-    siv.add_global_callback('q', |s| s.quit());
-    siv.add_fullscreen_layer(LinearLayout::vertical()
-        .child(TextView::new(StyledString::styled("Front Row Crew Forum", Effect::Bold)).h_align(HAlign::Center))
-        .child(DummyView.fixed_height(1))
-        .child(ListView::new()
-                .child("", LinearLayout::horizontal()
-                    .child(TextView::new("The Best Game You Can Name (Ice Hockey)")
-                            .fixed_width(50))
-                    .child(TextView::new("Sports").fixed_width(15))
-                    .child(TextView::new("146").fixed_width(5))
-                    .child(TextView::new("2.9K").fixed_width(5))
-                    .child(TextView::new("23m").fixed_width(5)))
-                .child("", LinearLayout::horizontal()
-                       .child(TextView::new("Professional Wrestling").fixed_width(50))
-                       .child(TextView::new("Sports").fixed_width(15))
-                       .child(TextView::new("247").fixed_width(5))
-                       .child(TextView::new("4.2k").fixed_width(5))
-                       .child(TextView::new("2h").fixed_width(5)))
-                .child("", LinearLayout::horizontal()
-                       .child(TextView::new("Media Analysis and Criticism")
-                            .fixed_width(50))
-                       .child(TextView::new("General").fixed_width(15))
-                       .child(TextView::new("49").fixed_width(5))
-                       .child(TextView::new("1.9k").fixed_width(5))
-                       .child(TextView::new("3h").fixed_width(5)))
-                .child("", LinearLayout::horizontal()
-                       .child(TextView::new("Utena").fixed_width(50))
-                       .child(TextView::new("Animation").fixed_width(15))
-                       .child(TextView::new("0").fixed_width(5))
-                       .child(TextView::new("11").fixed_width(5))
-                       .child(TextView::new("4h").fixed_width(5))))
-
-
-        .fixed_width(90));
-    siv.run();
-    
-   // println!("{}", api::gen_key("https://community.frontrowcrew.com".to_string()).unwrap());
+    let args: Vec<String> = env::args().collect();
+    match args.len() {
+        1 => {
+            let mut siv = Cursive::new();
+            siv.load_theme_file("/home/paul/.config/discourse-tui/theme.toml");
+            siv.add_global_callback('q', |s| s.quit());
+            siv.add_fullscreen_layer(LinearLayout::vertical()
+                .child(TextView::new(
+                        StyledString::styled("Front Row Crew Forum", Effect::Bold))
+                        .h_align(HAlign::Center))
+                .child(DummyView.fixed_height(1))
+                .fixed_width(90)
+                .with_id("main_layout"));
+            siv.add_global_callback('p', |s| show_listview(s));
+            siv.run();
+            
+        },
+        2 => {
+            if args[1].contains("discourse://auth_redirect") {
+                let reader = File::open("/tmp/discourse-tui/partial-api.json").unwrap();
+                let pa: PartialApi = serde_json::from_reader(reader).unwrap();
+                let payload = args[1].replace("discourse://auth_redirect?payload=", "");
+                let api = pa.decrypt_key(payload).unwrap();
+                let writer = File::create("/home/paul/.config/discourse-tui/config.json").unwrap();
+                serde_json::to_writer_pretty(writer, &api);
+            } else if args[1].contains("--new-key") {
+                let pa = PartialApi::gen_key_url("https://community.frontrowcrew.com"
+                                                 .to_string()).unwrap();
+                let writer = File::create("/tmp/discourse-tui/partial-api.json").unwrap();
+                serde_json::to_writer(writer, &pa);
+                println!("{}", &pa.api_authorize_url);
+            }
+        },
+        _ => {},
+    }
 }
 
+fn show_listview(siv: &mut Cursive) {
+    let reader = File::open("/home/paul/.config/discourse-tui/config.json").unwrap();
+    let api: Api = serde_json::from_reader(reader).unwrap();
+    match api.get_latest_topics() {
+    Err(err) => println!("{}", err),
+        Ok(topics) => {
+            siv.add_layer(ui::listview_from_topics(topics));
+        },
+    }
+}

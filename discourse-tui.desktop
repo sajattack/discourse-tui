@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Discourse TUI
+Exec=discourse-tui %u
+#Icon=
+Type=Application
+Terminal=true
+MimeType=x-scheme-handler/discourse;
