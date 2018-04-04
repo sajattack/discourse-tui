@@ -19,9 +19,9 @@ pub struct PartialApi {
 
 #[derive(Serialize, Deserialize)]
 pub struct Api {
-    client_id: String,
-    api_key: String,
-    base_url: String,
+    pub client_id: String,
+    pub api_key: String,
+    pub base_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

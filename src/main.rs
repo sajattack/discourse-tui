@@ -21,6 +21,8 @@ use cursive::align::HAlign;
 
 use std::env;
 use std::fs::File;
+use std::thread;
+use std::sync::mpsc;
 
 use api::PartialApi;
 use api::Api;
@@ -34,12 +36,30 @@ fn main() {
             siv.add_global_callback('q', |s| s.quit());
             siv.add_fullscreen_layer(LinearLayout::vertical()
                 .child(TextView::new(
-                        StyledString::styled("Front Row Crew Forum", Effect::Bold))
+                        StyledString::styled("Redox OS", Effect::Bold))
                         .h_align(HAlign::Center))
                 .child(DummyView.fixed_height(1))
                 .fixed_width(90)
                 .with_id("main_layout"));
-            siv.add_global_callback('p', |s| show_listview(s));
+            siv.set_fps(10);
+            let cb_sink = mpsc::Sender::clone(&siv.cb_sink());
+            let io_thread = thread::spawn(move || {
+                let reader = File::open("/home/paul/.config/discourse-tui/config.json").unwrap();
+                let api: Api = serde_json::from_reader(reader).unwrap();
+                let api = Api {
+                    base_url: "https://discourse.redox-os.org".to_string(),
+                    client_id: "".to_string(),
+                    api_key: "".to_string(),
+                };
+                match api.get_latest_topics() {
+                    Err(err) => println!("{}", err),
+                    Ok(topics) => {
+                        cb_sink.send(Box::new(|s: &mut Cursive| {
+                            s.add_layer(ui::listview_from_topics(topics));
+                        }));
+                    }
+                }     
+            });
             siv.run();
             
         },
@@ -63,13 +83,20 @@ fn main() {
     }
 }
 
-fn show_listview(siv: &mut Cursive) {
-    let reader = File::open("/home/paul/.config/discourse-tui/config.json").unwrap();
-    let api: Api = serde_json::from_reader(reader).unwrap();
-    match api.get_latest_topics() {
-    Err(err) => println!("{}", err),
-        Ok(topics) => {
-            siv.add_layer(ui::listview_from_topics(topics));
-        },
-    }
-}
+/*
+ *fn show_listview(siv: &mut Cursive) {
+ *    let reader = File::open("/home/paul/.config/discourse-tui/config.json").unwrap();
+ *    //let api: Api = serde_json::from_reader(reader).unwrap();
+ *    let api = Api {
+ *        base_url: "https://discourse.redox-os.org".to_string(),
+ *        client_id: "".to_string(),
+ *        api_key: "".to_string(),
+ *    };
+ *    match api.get_latest_topics() {
+ *    Err(err) => println!("{}", err),
+ *        Ok(topics) => {
+ *            siv.add_layer(ui::listview_from_topics(topics));
+ *        },
+ *    }
+ *}
+ */
