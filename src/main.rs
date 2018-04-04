@@ -8,9 +8,12 @@ extern crate rand;
 extern crate serde;
 extern crate serde_json;
 extern crate base64;
+extern crate chrono;
+extern crate chrono_humanize;
 
 mod api;
 mod ui;
+mod util;
 
 use cursive::Cursive;
 use cursive::theme::Effect;
@@ -36,26 +39,22 @@ fn main() {
             siv.add_global_callback('q', |s| s.quit());
             siv.add_fullscreen_layer(LinearLayout::vertical()
                 .child(TextView::new(
-                        StyledString::styled("Redox OS", Effect::Bold))
+                        StyledString::styled("Front Row Crew Forum", Effect::Bold))
                         .h_align(HAlign::Center))
                 .child(DummyView.fixed_height(1))
-                .fixed_width(90)
-                .with_id("main_layout"));
+                .with_id("main_layout")
+                );
             siv.set_fps(10);
             let cb_sink = mpsc::Sender::clone(&siv.cb_sink());
             let io_thread = thread::spawn(move || {
                 let reader = File::open("/home/paul/.config/discourse-tui/config.json").unwrap();
                 let api: Api = serde_json::from_reader(reader).unwrap();
-                let api = Api {
-                    base_url: "https://discourse.redox-os.org".to_string(),
-                    client_id: "".to_string(),
-                    api_key: "".to_string(),
-                };
                 match api.get_latest_topics() {
                     Err(err) => println!("{}", err),
                     Ok(topics) => {
                         cb_sink.send(Box::new(|s: &mut Cursive| {
-                            s.add_layer(ui::listview_from_topics(topics));
+                            let mut main_layout: ViewRef<LinearLayout> = s.find_id("main_layout").unwrap();
+                            main_layout.add_child(ui::listview_from_topics(topics, s.screen_size().x));
                         }));
                     }
                 }     
