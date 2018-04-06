@@ -8,3 +8,24 @@ pub fn datestring_to_humanstring(ds: &str) -> String {
     let ht = chrono_humanize::HumanTime::from(dur); 
     format!("{}", ht)
 }
+
+pub fn format_int(int: i32) -> String {
+    let num_k:  f32;
+    let dec_prec:  usize;
+    if int > 1000 {
+        num_k = int as f32/1000.0;
+    } else {
+        return int.to_string();
+    }
+    if int < 100_000 {
+        dec_prec = 1;
+    } else {
+        dec_prec = 0;
+    }
+    format!("{0:.1$}k", num_k, dec_prec) 
+}
+
+#[test]
+fn test_100100() {
+    assert_eq!(format_int(100100), "100k")
+}
