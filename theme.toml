@@ -1,0 +1,20 @@
+# Every field in a theme file is optional.
+
+# First come some various options
+shadow = false  # Don't draw shadows around stacked views
+borders = "none"
+
+# Here we define the color palette.
+[colors]
+    background = "black" 
+    view       = "black"
+
+    primary   = "#00ff00"
+    secondary = "blue"
+    tertiary  = "white"
+
+    title_primary   = "#00ff00"
+    title_secondary = "white"
+
+    highlight          = "#ffff00"
+    highlight_inactive = "#ff0000"
