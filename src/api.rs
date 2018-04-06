@@ -75,43 +75,72 @@ pub struct User {
     pub trust_level: i32,
     pub moderator: bool,
     pub admin: bool,
-    pub title: (),
-    pub uploaded_avatar_id: (),
+    pub title: Value,
+    pub uploaded_avatar_id: Value,
     pub badge_count: i32,
-    pub custom_fields: (),
+    pub custom_fields: Value,
     pub pending_count: i32,
     pub profile_view_count: i32,
-    pub primary_group_name: (),
-    pub primary_group_flair_url: (),
-    pub primary_group_flair_bg_color: (),
-    pub primary_group_flair_color: (),
+    pub primary_group_name: Value,
+    pub primary_group_flair_url: Value,
+    pub primary_group_flair_bg_color: Value,
+    pub primary_group_flair_color: Value,
     pub invited_by: Box<User>,
-    pub groups: (),
-    pub featured_user_badge_ids: (),
-    pub card_badge: (),
+    pub groups: Value,
+    pub featured_user_badge_ids: Value,
+    pub card_badge: Value,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Group {
-    id: i32,
-    automatic: bool,
-    name: String,
-    user_count: i32,
-    alias_level: i32,
-    visible: bool,
-    automatic_membership_email_domains: (),
-    automatic_membership_retroactive: bool,
-    primary_group: bool,
-    title: (),
-    grant_trust_level: (),
-    incoming_email: (),
-    notification_level: i32,
-    has_messages: bool,
-    is_member: bool,
-    mentionable: bool,
-    flair_url: (),
-    flair_bg_color: (),
-    flair_color: (),
+   pub id: i32,
+   pub automatic: bool,
+   pub name: String,
+   pub user_count: i32,
+   pub alias_level: i32,
+   pub visible: bool,
+   pub automatic_membership_email_domains: Value,
+   pub automatic_membership_retroactive: bool,
+   pub primary_group: bool,
+   pub title: Value,
+   pub grant_trust_level: Value,
+   pub incoming_email: Value,
+   pub notification_level: i32,
+   pub has_messages: bool,
+   pub is_member: bool,
+   pub mentionable: bool,
+   pub flair_url: Value,
+   pub flair_bg_color: Value,
+   pub flair_color: Value,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Category {
+   pub id: i32,
+   pub name: String,
+   pub color: String,
+   pub text_color: String,
+   pub slug: String,
+   pub topic_count: i32,
+   pub post_count: i32,
+   pub position: i32,
+   pub description: String,
+   pub description_text: String,
+   pub topic_url: String,
+   pub logo_url: Option<String>,
+   pub background_url: Option<String>,
+   pub read_restricted: bool,
+   pub permission: Option<i32>,
+   pub notification_level: Option<i32>,
+   pub can_edit: Option<bool>,
+   pub topic_template: Option<String>,
+   pub has_children: bool,
+   pub topics_day: i32,
+   pub topics_week: i32,
+   pub topics_month: i32,
+   pub topics_year: i32,
+   pub topics_all_time: i32,
+   pub description_excerpt: String,
 }
 
 impl Api {
@@ -123,6 +152,19 @@ impl Api {
                 json = v["topic_list"]["topics"].to_string();
                 let topics: Vec<Topic> = serde_json::from_str(&json).unwrap();
                 Ok(topics)
+            },
+            Err(err) => return Err(err),
+        }
+    }
+
+    pub fn get_categories(&self) -> Result<Vec<Category>, reqwest::Error> {
+        match reqwest::get(&(self.base_url.clone() + "/categories.json")) {
+            Ok(mut response) => {
+                let mut json = response.text().unwrap();
+                let v: Value = serde_json::from_str(&json).unwrap();
+                json = v["category_list"]["categories"].to_string();
+                let categories: Vec<Category> = serde_json::from_str(&json).unwrap();
+                Ok(categories)
             },
             Err(err) => return Err(err),
         }
