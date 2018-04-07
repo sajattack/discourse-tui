@@ -73,7 +73,8 @@ fn main() {
                         Ok(topics) => {
                             cb_sink.send(Box::new(move |s: &mut Cursive| {
                                 let mut main_layout: ViewRef<LinearLayout> = s.find_id("main_layout").unwrap();
-                                siv.add_layer(ui::init_topicview(topics, s.screen_size().x, &categories));
+                                let width = s.screen_size().x;
+                                main_layout.add_child(ui::init_topicview(topics, width, &categories));
                                 }));
                             }
                         }

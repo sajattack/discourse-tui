@@ -29,3 +29,12 @@ pub fn format_int(int: i32) -> String {
 fn test_100100() {
     assert_eq!(format_int(100100), "100k")
 }
+
+pub fn pad_or_trunc(mut s: String, width: usize) -> String {
+    if width > s.len() {
+        format!("{:w$}", s, w=width)
+    } else {
+        s.truncate(width);
+        s
+    }
+}
