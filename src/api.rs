@@ -230,7 +230,7 @@ impl PartialApi {
     pub fn decrypt_key(self, payload: String) -> Result<Api, String> {
         let mut buf = [0u8;256];
         let rsa = Rsa::private_key_from_pem(self.pem.as_bytes()).unwrap();
-        let payload_bytes = base64::decode(&payload).unwrap(); 
+        let payload_bytes = base64::decode_config(&payload, base64::URL_SAFE).unwrap(); 
         let api_key: String;
         match rsa.private_decrypt(&payload_bytes, &mut buf, Padding::PKCS1) {
             Ok(_) => {

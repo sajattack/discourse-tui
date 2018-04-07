@@ -44,7 +44,6 @@ const APP_INFO: AppInfo = AppInfo {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let config_dir =  app_dir(AppDataType::UserConfig, &APP_INFO, "").unwrap();
-    println!("{:?}", config_dir); 
     let tmp_dir = TempDir::new("discourse-tui").unwrap();
     match args.len() {
         1 => {
@@ -74,7 +73,7 @@ fn main() {
                         Ok(topics) => {
                             cb_sink.send(Box::new(move |s: &mut Cursive| {
                                 let mut main_layout: ViewRef<LinearLayout> = s.find_id("main_layout").unwrap();
-                                main_layout.add_child(ui::listview_from_topics(topics, s.screen_size().x, &categories));
+                                siv.add_layer(ui::init_topicview(topics, s.screen_size().x, &categories));
                                 }));
                             }
                         }
