@@ -24,7 +24,7 @@ pub struct Api {
     pub base_url: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Topic {
     pub id: i32,
     pub title: String,
@@ -143,6 +143,53 @@ pub struct Category {
    pub description_excerpt: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Post {
+    pub id: i32,
+    pub name: Option<String>,
+    pub username: String,
+    pub avatar_template: String,
+    pub created_at: String,
+    pub cooked: String,
+    pub post_number: i32,
+    pub post_type: i32,
+    pub updated_at: String,
+    pub reply_count: i32,
+    pub reply_to_post_number: Value,
+    pub quote_count: i32,
+    pub avg_time: Value,
+    pub incoming_link_count: i32,
+    pub reads: i32,
+    pub score: f64,
+    pub yours: bool,
+    pub topic_id: i32,
+    pub topic_slug: String,
+    pub display_username: Option<String>,
+    pub primary_group_name: Value,
+    pub primary_group_flair_url: Value,
+    pub primary_group_flair_bg_color: Value,
+    pub primary_group_flair_color: Value,
+    pub version: i32,
+    pub can_edit: bool,
+    pub can_delete: bool,
+    pub can_recover: bool,
+    pub user_title: Value,
+    pub raw: String,
+    pub actions_summary: Vec<Value>,
+    pub moderator: bool,
+    pub admin: bool,
+    pub staff: bool,
+    pub user_id: i32,
+    pub hidden: bool,
+    pub hidden_reason_id: Value,
+    pub trust_level: i32,
+    pub deleted_at: Value,
+    pub user_deleted: bool,
+    pub edit_reason: Value,
+    pub can_view_edit_history: bool,
+    pub wiki: bool,
+}
+
 impl Api {
     pub fn get_latest_topics(&self) -> Result<Vec<Topic>, reqwest::Error> {
         match reqwest::get(&(self.base_url.clone() + "/latest.json")) {
@@ -165,6 +212,17 @@ impl Api {
                 json = v["category_list"]["categories"].to_string();
                 let categories: Vec<Category> = serde_json::from_str(&json).unwrap();
                 Ok(categories)
+            },
+            Err(err) => return Err(err),
+        }
+    }
+
+    pub fn get_post(&self, id: i32) -> Result<Post, reqwest::Error> {
+        match reqwest::get(&(self.base_url.clone() + &format!("/posts/{}.json", id))) {
+            Ok(mut response) => {
+                let mut json = response.text().unwrap();
+                let post: Post = serde_json::from_str(&json).unwrap();
+                Ok(post)
             },
             Err(err) => return Err(err),
         }

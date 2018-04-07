@@ -1,4 +1,4 @@
-use cursive::views::{SelectView, LinearLayout, TextView};
+use cursive::views::{SelectView};
 use cursive::traits::*;
 use api::Topic;
 use api::Category;
