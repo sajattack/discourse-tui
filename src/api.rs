@@ -19,13 +19,58 @@ pub struct PartialApi {
 
 #[derive(Serialize, Deserialize)]
 pub struct Api {
-    pub client_id: String,
-    pub api_key: String,
-    pub base_url: String,
+    client_id: String,
+    api_key: String,
+    base_url: String,
 }
+
+// Discourse is dumb and retuns different types of topics depending how you query.
+// Topic is returned when you query by ID
+// LatestTopic is returned when you query for the latest topics
+// The latter doesn't actually contain a reference to the posts
 
 #[derive(Serialize, Deserialize)]
 pub struct Topic {
+    pub post_stream: Value,
+    pub timeline_lookup: Value,
+    pub id: i32,
+    pub title: String,
+    pub fancy_title: String,
+    pub posts_count: i32,
+    pub created_at: String,
+    pub views: i32,
+    pub reply_count: i32,
+    pub participant_count: i32,
+    pub like_count: i32,
+    pub last_posted_at: Value,
+    pub visible: bool,
+    pub closed: bool,
+    pub archived: bool,
+    pub has_summary: bool,
+    pub archetype: String,
+    pub slug: String,
+    pub category_id: i32,
+    pub word_count: Value,
+    pub deleted_at: Option<Value>,
+    pub user_id: i32,
+    pub draft: Option<Value>,
+    pub draft_key: String,
+    pub draft_sequence: Option<Value>,
+    pub unpinned: Option<Value>,
+    pub pinned_globally: bool,
+    pub pinned: bool,
+    pub pinned_at: Option<String>,
+    pub pinned_until: Option<Value>,
+    pub details: Value,
+    pub highest_post_number: i32,
+    pub deleted_by: Option<Value>,
+    pub actions_summary: Value,
+    pub chunk_size: i32,
+    pub bookmarked: Option<Value>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LatestTopic {
     pub id: i32,
     pub title: String,
     pub fancy_title: String,
@@ -124,9 +169,9 @@ pub struct Category {
    pub topic_count: i32,
    pub post_count: i32,
    pub position: i32,
-   pub description: String,
-   pub description_text: String,
-   pub topic_url: String,
+   pub description: Option<String>,
+   pub description_text: Option<String>,
+   pub topic_url: Option<String>,
    pub logo_url: Option<String>,
    pub background_url: Option<String>,
    pub read_restricted: bool,
@@ -140,7 +185,7 @@ pub struct Category {
    pub topics_month: i32,
    pub topics_year: i32,
    pub topics_all_time: i32,
-   pub description_excerpt: String,
+   pub description_excerpt: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -191,14 +236,25 @@ pub struct Post {
 }
 
 impl Api {
-    pub fn get_latest_topics(&self) -> Result<Vec<Topic>, reqwest::Error> {
+    pub fn get_latest_topics(&self) -> Result<Vec<LatestTopic>, reqwest::Error> {
         match reqwest::get(&(self.base_url.clone() + "/latest.json")) {
             Ok(mut response) => {
                 let mut json = response.text().unwrap();
                 let v: Value = serde_json::from_str(&json).unwrap();
                 json = v["topic_list"]["topics"].to_string();
-                let topics: Vec<Topic> = serde_json::from_str(&json).unwrap();
+                let topics: Vec<LatestTopic> = serde_json::from_str(&json).unwrap();
                 Ok(topics)
+            },
+            Err(err) => return Err(err),
+        }
+    }
+
+    pub fn get_topic_by_id(&self, id: i32) -> Result<Topic, reqwest::Error> {
+        match reqwest::get(&(self.base_url.clone() + &format!("/t/{}.json", id))) {
+            Ok(mut response) => {
+                let mut json = response.text().unwrap();
+                let topic: Topic = serde_json::from_str(&json).unwrap();
+                Ok(topic)
             },
             Err(err) => return Err(err),
         }
@@ -217,12 +273,40 @@ impl Api {
         }
     }
 
-    pub fn get_post(&self, id: i32) -> Result<Post, reqwest::Error> {
+    pub fn get_post_by_id(&self, id: i32) -> Result<Post, reqwest::Error> {
         match reqwest::get(&(self.base_url.clone() + &format!("/posts/{}.json", id))) {
             Ok(mut response) => {
                 let mut json = response.text().unwrap();
                 let post: Post = serde_json::from_str(&json).unwrap();
                 Ok(post)
+            },
+            Err(err) => return Err(err),
+        }
+    }
+
+    pub fn get_posts_in_topic(&self, topic: &Topic, index: i32, count: i32) 
+        -> Result<Vec<Post>, reqwest::Error> {
+        let post_index_list: &Vec<Value> = topic.post_stream["stream"].as_array().unwrap();
+        let mut posts: Vec<Post> = Vec::new();
+        for i in index..index+count {
+            let post_id = post_index_list.get(i as usize).unwrap().as_i64().unwrap();
+            match self.get_post_by_id(post_id as i32) {
+                Ok(post) => posts.push(post),
+                Err(err) => return Err(err),
+            }
+        }
+        Ok(posts)
+    }
+
+
+    pub fn get_forum_name(&self) -> Result<String, reqwest::Error> {
+        match reqwest::get(&(self.base_url.clone() + "/about.json")) {
+            Ok(mut response) => {
+                let mut json = response.text().unwrap();
+                let v: Value = serde_json::from_str(&json).unwrap();
+                json = v["about"]["title"].to_string();
+                let name: String = serde_json::from_str(&json).unwrap();
+                Ok(name)
             },
             Err(err) => return Err(err),
         }

@@ -17,4 +17,4 @@ borders = "none"
     title_secondary = "white"
 
     highlight          = "#ffff00"
-    highlight_inactive = "#ff0000"
+    highlight_inactive = "#808080"

@@ -12,6 +12,7 @@ extern crate serde_json;
 extern crate base64;
 extern crate chrono;
 extern crate chrono_humanize;
+extern crate textwrap;
 
 mod api;
 mod ui;
@@ -35,6 +36,7 @@ use std::sync::mpsc;
 use api::PartialApi;
 use api::Api;
 use api::Category;
+use api::LatestTopic;
 
 const APP_INFO: AppInfo = AppInfo {
     name: "discourse-tui",
@@ -63,23 +65,26 @@ fn main() {
             let io_thread = thread::spawn(move || {
                 let reader = File::open(config_dir.as_path().join("config.json")).unwrap();
                 let api: Api = serde_json::from_reader(reader).unwrap();
-                let categories: Vec<Category>;
-                match api.get_categories() {
-                    Err(err) => println!("{}", err),
-                    Ok(cat) => {
-                        categories = cat;
-                        match api.get_latest_topics() {
-                        Err(err) => println!("{}", err),
-                        Ok(topics) => {
-                            cb_sink.send(Box::new(move |s: &mut Cursive| {
-                                let mut main_layout: ViewRef<LinearLayout> = s.find_id("main_layout").unwrap();
-                                let width = s.screen_size().x;
-                                main_layout.add_child(ui::init_topicview(topics, width, &categories));
-                                }));
-                            }
-                        }
-                    }
-                }     
+                let categories = api.get_categories().unwrap();
+                let latest_topics = api.get_latest_topics().unwrap();
+                let forum_name = api.get_forum_name().unwrap();
+                cb_sink.send(Box::new(move |s: &mut Cursive| {
+                    let mut forum_name_view: ViewRef<TextView> = s.find_id("forum_name").unwrap();
+                    forum_name_view.set_content(forum_name);
+                    let mut main_layout: ViewRef<LinearLayout> = s.find_id("main_layout").unwrap();
+                    let width = s.screen_size().x;
+                    let mut topic_selector = ui::new_topic_selector(latest_topics, width, &categories);
+                    topic_selector.set_on_submit(move |s, lt| {    
+                        let topic = api.get_topic_by_id(lt.id).unwrap();
+                        let posts = api.get_posts_in_topic(&topic, topic.posts_count-3, 3).unwrap();
+                        s.add_active_screen();
+                        s.screen_mut().add_layer(
+                            ui::new_multipost_view(posts))
+                    });
+                    main_layout.add_child(topic_selector);
+
+                    
+                }));
             });
             siv.run();
         },

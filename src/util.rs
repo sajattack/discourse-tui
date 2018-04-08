@@ -2,6 +2,8 @@ use chrono::prelude::*;
 use chrono_humanize;
 use chrono;
 
+use api::Category;
+
 pub fn datestring_to_humanstring(ds: &str) -> String {
     let dt = ds.parse::<DateTime<Utc>>().unwrap();
     let dur = dt.signed_duration_since(chrono::Utc::now());
@@ -37,4 +39,13 @@ pub fn pad_or_trunc(mut s: String, width: usize) -> String {
         s.truncate(width);
         s
     }
+}
+
+pub fn lookup_category(categories: &Vec<Category>, id: i32) -> Option<String> {
+    for category in categories.iter() {
+        if category.id == id {
+            return Some(category.name.clone())
+        }
+    }
+    None
 }
