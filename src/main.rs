@@ -35,8 +35,7 @@ use std::sync::mpsc;
 
 use api::PartialApi;
 use api::Api;
-use api::Category;
-use api::LatestTopic;
+use api::{Category, Post, LatestTopic};
 
 const APP_INFO: AppInfo = AppInfo {
     name: "discourse-tui",
@@ -76,7 +75,12 @@ fn main() {
                     let mut topic_selector = ui::new_topic_selector(latest_topics, width, &categories);
                     topic_selector.set_on_submit(move |s, lt| {    
                         let topic = api.get_topic_by_id(lt.id).unwrap();
-                        let posts = api.get_posts_in_topic(&topic, topic.posts_count-3, 3).unwrap();
+                        let posts: Vec<Post>;
+                        if topic.posts_count > 3 {
+                            posts = api.get_posts_in_topic(&topic, topic.posts_count-3, 3).unwrap();
+                        } else {
+                            posts = api.get_posts_in_topic(&topic, 0, topic.posts_count).unwrap()
+                        }
                         s.add_active_screen();
                         s.screen_mut().add_layer(
                             ui::new_multipost_view(posts))
