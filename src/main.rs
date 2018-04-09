@@ -61,20 +61,22 @@ fn main() {
                 let api = pa.decrypt_key(payload).unwrap();
                 let writer = File::create(config_dir.as_path().join("config.json")).unwrap();
                 serde_json::to_writer_pretty(writer, &api);
-            } else if args[1].contains("--new-key") {
-                let pa = PartialApi::gen_key_url("https://community.frontrowcrew.com"
-                    .to_string()).unwrap();
+            } else if args[1].starts_with("http") {
+                let api = Api::new_unauthenticated(&args[1]);
+                run_with_api(api);
+            }
+        },
+        3 => {
+             if args[1].contains("--new-key") {
+                let pa = PartialApi::gen_key_url(args[2].clone()).unwrap();
                 if !tmp_dir.exists() {
                     fs::create_dir(tmp_dir);
                 }
                 let writer = File::create(tmp_dir.join("partial-api.json")).unwrap();
                 serde_json::to_writer(writer, &pa);
                 println!("{}", &pa.api_authorize_url);
-            } else if args[1].starts_with("http") {
-                let api = Api::new_unauthenticated(&args[1]);
-                run_with_api(api);
             }
-        },
+        }
         _ => {},
     }
 }
