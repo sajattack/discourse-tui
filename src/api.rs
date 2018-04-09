@@ -19,8 +19,8 @@ pub struct PartialApi {
 
 #[derive(Serialize, Deserialize)]
 pub struct Api {
-    client_id: String,
-    api_key: String,
+    client_id: Option<String>,
+    api_key: Option<String>,
     base_url: String,
 }
 
@@ -236,6 +236,14 @@ pub struct Post {
 }
 
 impl Api {
+    pub fn new_unauthenticated(base_url: &str) -> Api {
+        Api {
+            base_url: base_url.to_string(),
+            client_id: None,
+            api_key: None,
+        }
+    }
+
     pub fn get_latest_topics(&self) -> Result<Vec<LatestTopic>, reqwest::Error> {
         match reqwest::get(&(self.base_url.clone() + "/latest.json")) {
             Ok(mut response) => {
@@ -372,7 +380,7 @@ impl PartialApi {
     pub fn decrypt_key(self, payload: String) -> Result<Api, String> {
         let mut buf = [0u8;256];
         let rsa = Rsa::private_key_from_pem(self.pem.as_bytes()).unwrap();
-        let payload_bytes = base64::decode_config(&payload, base64::URL_SAFE).unwrap(); 
+        let payload_bytes = base64::decode(&payload).unwrap(); 
         let api_key: String;
         match rsa.private_decrypt(&payload_bytes, &mut buf, Padding::PKCS1) {
             Ok(_) => {
@@ -383,8 +391,8 @@ impl PartialApi {
             Err(estack) => return Err(format!("{}", estack)),
         }
         let api = Api {
-            client_id: self.client_id.clone(),
-            api_key: api_key, 
+            client_id: Some(self.client_id.clone()),
+            api_key: Some(api_key), 
             base_url: self.base_url,
         };
         Ok(api)
