@@ -17,7 +17,7 @@ pub fn new_topic_selector(topics: Vec<LatestTopic>, width: usize, categories: &V
         tv.add_item(format!("{} {} {} {} {}",
             pad_or_trunc(topic.title.clone(), width-50), 
             pad_or_trunc(lookup_category(categories, topic.category_id).unwrap(), 15), 
-            pad_or_trunc(format_int(topic.posts_count), 5), 
+            pad_or_trunc(format_int(topic.posts_count-1), 5), 
             pad_or_trunc(format_int(topic.views), 6), 
             pad_or_trunc(datestring_to_humanstring(&topic.last_posted_at), 15))
                     , topic);
