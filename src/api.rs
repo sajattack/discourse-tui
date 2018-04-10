@@ -245,6 +245,10 @@ impl Api {
         }
     }
 
+    pub fn has_key(&self) -> bool {
+        self.api_key.is_some()
+    }
+
     pub fn get_latest_topics(&self) -> Result<Vec<LatestTopic>, reqwest::Error> {
         match reqwest::get(&(self.base_url.clone() + "/latest.json")) {
             Ok(mut response) => {

@@ -127,17 +127,19 @@ fn run_with_api(api: Api) {
                 topic_view.get_inner_mut().add_child(TextView::new(topic.title.clone()));
                 topic_view.get_inner_mut().add_child(ui::new_multipost_view(posts));
                 let api_copy = Arc::clone(&api);
-                topic_view.set_on_event('r', move |s| {
-                    let api = api_copy.clone();
-                    let topic_id = topic.id;
-                    s.screen_mut().add_layer(Dialog::around(TextArea::new().with_id("text_area"))
-                        .button("Reply", move |s_| {
-                            let text_area: ViewRef<TextArea> = s_.find_id("text_area").unwrap();
-                            api.make_post_in_topic(topic_id, text_area.get_content().to_string());
-                            s_.pop_layer()
-                        })
-                        .dismiss_button("Cancel"));
-                });
+                if api.has_key() {
+                    topic_view.set_on_event('r', move |s| {
+                        let api = api_copy.clone();
+                        let topic_id = topic.id;
+                        s.screen_mut().add_layer(Dialog::around(TextArea::new().with_id("text_area"))
+                            .button("Reply", move |s_| {
+                                let text_area: ViewRef<TextArea> = s_.find_id("text_area").unwrap();
+                                api.make_post_in_topic(topic_id, text_area.get_content().to_string());
+                                s_.pop_layer()
+                            })
+                            .dismiss_button("Cancel"));
+                    });
+                }
                 let main_screen = s.active_screen();
                 s.add_active_screen();
                 s.screen_mut().add_layer(topic_view);
