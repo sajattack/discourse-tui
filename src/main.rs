@@ -134,6 +134,7 @@ fn run_with_api(api: Api) {
                         .button("Reply", move |s_| {
                             let text_area: ViewRef<TextArea> = s_.find_id("text_area").unwrap();
                             api.make_post_in_topic(topic_id, text_area.get_content().to_string());
+                            s_.pop_layer()
                         })
                         .dismiss_button("Cancel"));
                 });
