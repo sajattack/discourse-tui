@@ -52,7 +52,7 @@ fn main() {
     match args.len() {
         1 => {
             let reader = File::open(config_dir.as_path().join("config.json")).unwrap();
-            let api = serde_json::from_reader(reader).unwrap();
+            let api: Api = serde_json::from_reader(reader).unwrap();
             run_with_api(api);
         },
         2 => {
