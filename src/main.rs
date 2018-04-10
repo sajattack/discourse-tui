@@ -115,9 +115,8 @@ fn run_with_api(api: Api) {
             let mut topic_selector = ui::new_topic_selector(latest_topics, width, &categories);
             let api_copy = Arc::clone(&api);
             topic_selector.set_on_submit(move |s, lt| {
-                let api = api_copy;
+                let api = api_copy.clone();
                 let topic = api.get_topic_by_id(lt.id).unwrap();
-                let topic = Rc::new(&topic);
                 let posts: Vec<Post>;
                 if topic.posts_count > 3 {
                     posts = api.get_posts_in_topic(&topic, topic.posts_count-3, 3).unwrap();
@@ -128,14 +127,13 @@ fn run_with_api(api: Api) {
                 topic_view.get_inner_mut().add_child(TextView::new(topic.title.clone()));
                 topic_view.get_inner_mut().add_child(ui::new_multipost_view(posts));
                 let api_copy = Arc::clone(&api);
-                let topic_copy = Rc::clone(&topic);
                 topic_view.set_on_event('r', move |s| {
-                    let api = api_copy;
-                    let topic = topic_copy;
+                    let api = api_copy.clone();
+                    let topic_id = topic.id;
                     s.screen_mut().add_layer(Dialog::around(TextArea::new().with_id("text_area"))
                         .button("Reply", move |s_| {
                             let text_area: ViewRef<TextArea> = s_.find_id("text_area").unwrap();
-                            api.make_post_in_topic(&topic, text_area.get_content().to_string());
+                            api.make_post_in_topic(topic_id, text_area.get_content().to_string());
                         })
                         .dismiss_button("Cancel"));
                 });

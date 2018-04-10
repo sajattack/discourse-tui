@@ -307,13 +307,13 @@ impl Api {
         Ok(posts)
     }
 
-    pub fn make_post_in_topic(&self, topic: &Topic, raw: String) 
+    pub fn make_post_in_topic(&self, topic_id: i32, raw: String) 
         -> Result<Post, String> {
         match self.api_key {
             None => Err("Cannot post without an API key".to_string()),
             Some(ref api_key) => {
                 let client = reqwest::Client::new();
-                let form_data = [("topic_id", format!("{}", topic.id)), ("raw", raw)];
+                let form_data = [("topic_id", format!("{}", topic_id)), ("raw", raw)];
                 header!{(UserApiKey, "User-Api-Key") => [String]}
                 match client.post(&(self.base_url.clone() + "/posts"))
                     .header(UserApiKey(api_key.to_string()))
