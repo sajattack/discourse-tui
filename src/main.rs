@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate hyper;
 
 extern crate app_dirs;
 extern crate cursive;
@@ -50,7 +52,7 @@ fn main() {
     match args.len() {
         1 => {
             let reader = File::open(config_dir.as_path().join("config.json")).unwrap();
-            let api: Api = serde_json::from_reader(reader).unwrap();
+            let api = serde_json::from_reader(reader).unwrap();
             run_with_api(api);
         },
         2 => {
@@ -83,7 +85,6 @@ fn main() {
 
 fn run_with_api(api: Api) {
     let config_dir =  app_dir(AppDataType::UserConfig, &APP_INFO, "").unwrap();
-    let tmp_dir = &env::temp_dir().join("discourse-tui");
     let mut siv = Cursive::new();
     siv.load_theme_file(config_dir.as_path().join("theme.toml"));
     siv.add_global_callback('q', |s| s.quit());
@@ -115,16 +116,23 @@ fn run_with_api(api: Api) {
                 } else {
                     posts = api.get_posts_in_topic(&topic, 0, topic.posts_count).unwrap()
                 }
-
+                let mut topic_view = OnEventView::new(LinearLayout::vertical());
+                topic_view.get_inner_mut().add_child(TextView::new(topic.title.clone()));
+                topic_view.get_inner_mut().add_child(ui::new_multipost_view(posts));
+                topic_view.set_on_event('r', move |s| {
+                    s.screen_mut().add_layer(Dialog::around(TextArea::new().with_id("text_area"))
+                        .button("Reply", |s_| {
+                            let text_area: ViewRef<TextArea> = s_.find_id("text_area").unwrap();
+                            api.make_post_in_topic(&topic, text_area.get_content().to_string());
+                        })
+                        .dismiss_button("Cancel"));
+                });
                 let main_screen = s.active_screen();
                 s.add_active_screen();
-                s.screen_mut().add_fullscreen_layer(TextView::new(topic.title));
-                s.screen_mut().add_layer(ui::new_multipost_view(posts));
-                s.add_global_callback(Key::Esc, move |si| si.set_screen(main_screen));
+                s.screen_mut().add_layer(topic_view);
+                s.add_global_callback(Key::Esc, move |s___| s___.set_screen(main_screen));
             });
             main_layout.add_child(topic_selector);
-
-
         }));
     });
     siv.run();

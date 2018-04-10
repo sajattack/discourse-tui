@@ -8,6 +8,7 @@ use std::str;
 use base64;
 use serde_json;
 use serde_json::Value;
+use hyper::header::Headers;
 
 #[derive(Serialize, Deserialize)]
 pub struct PartialApi {
@@ -219,7 +220,7 @@ pub struct Post {
     pub can_delete: bool,
     pub can_recover: bool,
     pub user_title: Value,
-    pub raw: String,
+    pub raw: Option<String>,
     pub actions_summary: Vec<Value>,
     pub moderator: bool,
     pub admin: bool,
@@ -306,6 +307,28 @@ impl Api {
         Ok(posts)
     }
 
+    pub fn make_post_in_topic(&self, topic: &Topic, raw: String) 
+        -> Result<Post, String> {
+        match self.api_key {
+            None => Err("Cannot post without an API key".to_string()),
+            Some(ref api_key) => {
+                let client = reqwest::Client::new();
+                let form_data = [("topic_id", format!("{}", topic.id)), ("raw", raw)];
+                header!{(UserApiKey, "User-Api-Key") => [String]}
+                match client.post(&(self.base_url.clone() + "/posts"))
+                    .header(UserApiKey(api_key.to_string()))
+                    .form(&form_data)
+                    .send() {
+                        Ok(mut response) => {
+                            let json = response.text().unwrap();
+                            let post: Post = serde_json::from_str(&json).unwrap();
+                            Ok(post)
+                        },
+                        Err(e) => Err(format!("{}", e))
+                }
+            }
+        }
+    }
 
     pub fn get_forum_name(&self) -> Result<String, reqwest::Error> {
         match reqwest::get(&(self.base_url.clone() + "/about.json")) {

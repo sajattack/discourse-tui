@@ -51,7 +51,7 @@ impl PostView {
     }
 
     fn compute_rows(&mut self, size: Vec2) {
-        self.text_rows = fill(&self.post.raw, size.x-2).lines().map(ToOwned::to_owned).collect();
+        self.text_rows = fill(&self.post.raw.clone().unwrap(), size.x-2).lines().map(ToOwned::to_owned).collect();
     }
 }
 
