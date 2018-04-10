@@ -34,6 +34,8 @@ use std::fs;
 use std::fs::File;
 use std::thread;
 use std::sync::mpsc;
+use std::sync::Arc;
+use std::rc::Rc;
 use std::path::Path;
 
 use api::PartialApi;
@@ -84,6 +86,7 @@ fn main() {
 }
 
 fn run_with_api(api: Api) {
+    let api = Arc::new(api);
     let config_dir =  app_dir(AppDataType::UserConfig, &APP_INFO, "").unwrap();
     let mut siv = Cursive::new();
     siv.load_theme_file(config_dir.as_path().join("theme.toml"));
@@ -98,7 +101,9 @@ fn run_with_api(api: Api) {
         );
     siv.set_fps(10);
     let cb_sink = mpsc::Sender::clone(&siv.cb_sink());
+    let api_copy = Arc::clone(&api);
     let io_thread = thread::spawn(move || {
+        let api = api_copy;
         let categories = api.get_categories().unwrap();
         let latest_topics = api.get_latest_topics().unwrap();
         let forum_name = api.get_forum_name().unwrap();
@@ -108,8 +113,11 @@ fn run_with_api(api: Api) {
             let mut main_layout: ViewRef<LinearLayout> = s.find_id("main_layout").unwrap();
             let width = s.screen_size().x;
             let mut topic_selector = ui::new_topic_selector(latest_topics, width, &categories);
+            let api_copy = Arc::clone(&api);
             topic_selector.set_on_submit(move |s, lt| {
+                let api = api_copy;
                 let topic = api.get_topic_by_id(lt.id).unwrap();
+                let topic = Rc::new(&topic);
                 let posts: Vec<Post>;
                 if topic.posts_count > 3 {
                     posts = api.get_posts_in_topic(&topic, topic.posts_count-3, 3).unwrap();
@@ -119,9 +127,13 @@ fn run_with_api(api: Api) {
                 let mut topic_view = OnEventView::new(LinearLayout::vertical());
                 topic_view.get_inner_mut().add_child(TextView::new(topic.title.clone()));
                 topic_view.get_inner_mut().add_child(ui::new_multipost_view(posts));
+                let api_copy = Arc::clone(&api);
+                let topic_copy = Rc::clone(&topic);
                 topic_view.set_on_event('r', move |s| {
+                    let api = api_copy;
+                    let topic = topic_copy;
                     s.screen_mut().add_layer(Dialog::around(TextArea::new().with_id("text_area"))
-                        .button("Reply", |s_| {
+                        .button("Reply", move |s_| {
                             let text_area: ViewRef<TextArea> = s_.find_id("text_area").unwrap();
                             api.make_post_in_topic(&topic, text_area.get_content().to_string());
                         })
