@@ -115,7 +115,7 @@ fn run_with_api(api: Api) {
             let mut topic_selector = ui::new_topic_selector(latest_topics, width, &categories);
             let api_copy = Arc::clone(&api);
             topic_selector.set_on_submit(move |s, lt| {
-                let api = api_copy.clone();
+                let api = Arc::clone(&api_copy);
                 let topic = api.get_topic_by_id(lt.id).unwrap();
                 let posts: Vec<Post>;
                 if topic.posts_count > 3 {
@@ -129,7 +129,7 @@ fn run_with_api(api: Api) {
                 let api_copy = Arc::clone(&api);
                 if api.has_key() {
                     topic_view.set_on_event('r', move |s| {
-                        let api = api_copy.clone();
+                        let api = Arc::clone(&api_copy);
                         let topic_id = topic.id;
                         s.screen_mut().add_layer(Dialog::around(TextArea::new().with_id("text_area"))
                             .button("Reply", move |s_| {
