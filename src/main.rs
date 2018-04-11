@@ -14,6 +14,7 @@ extern crate base64;
 extern crate chrono;
 extern crate chrono_humanize;
 extern crate textwrap;
+extern crate percent_encoding;
 
 mod api;
 mod ui;

@@ -9,6 +9,7 @@ use base64;
 use serde_json;
 use serde_json::Value;
 use hyper::header::Headers;
+use percent_encoding::percent_decode;
 
 #[derive(Serialize, Deserialize)]
 pub struct PartialApi {
@@ -405,9 +406,11 @@ impl PartialApi {
     }
 
     pub fn decrypt_key(self, payload: String) -> Result<Api, String> {
+        let payload = payload.replace("%0A", "");
         let mut buf = [0u8;256];
         let rsa = Rsa::private_key_from_pem(self.pem.as_bytes()).unwrap();
-        let payload_bytes = base64::decode(&payload).unwrap(); 
+        let mut percent_decoded = percent_decode(payload.as_bytes()).decode_utf8().unwrap();
+        let payload_bytes = base64::decode(percent_decoded.to_mut()).unwrap();
         let api_key: String;
         match rsa.private_decrypt(&payload_bytes, &mut buf, Padding::PKCS1) {
             Ok(_) => {
