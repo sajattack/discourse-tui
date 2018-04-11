@@ -37,6 +37,7 @@ You may need to logout for this to have an effect.
 discourse-tui --new-key <url>
 ```
 Click the link
+
 Click "Authorize"
 You should see a terminal flash open briefly, this is discourse-tui opening and completing the authentication.
 
