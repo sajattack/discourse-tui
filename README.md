@@ -12,7 +12,7 @@ Terminal UI for Discourse forums
 mkdir -p ~/.config/discourse-tui
 cp theme.toml ~/.config/discourse-tui
 cargo build --release
-cp target/release/discourse-tui ~/.local/bin
+sudo cp target/release/discourse-tui /usr/bin
 ```
 
 ## Run (unauthenticated)
