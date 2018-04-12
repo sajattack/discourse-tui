@@ -50,7 +50,4 @@ The TUI will open with the URL you specified in the --new-key phase and you will
 ## Troubleshooting
 * If discourse-tui doesn't flash open when you click "Authorize", you will need to manually copy the `discourse://auth_redirect?payload=<base64>` URI as an argument to discourse-tui.
 Try opening the network tab of your browser's developer tools, refreshing the authorize page, clicking authorize, and look for this URI.
-* Blank screen in tmux - add this to your ~/.tmux.conf
-```
-set -g default-terminal "screen-256color"
-```
+* Blank screen in tmux - add this to your ~/.tmux.conf `set -g default-terminal "screen-256color"`
