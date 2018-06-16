@@ -1,5 +1,5 @@
 use cursive;
-use cursive::views::{SelectView, LinearLayout, TextView};
+use cursive::views::{SelectView, LinearLayout, ScrollView, TextView};
 use cursive::traits::*;
 use cursive::align::HAlign;
 use cursive::{Printer, XY};
@@ -25,12 +25,12 @@ pub fn new_topic_selector(topics: Vec<LatestTopic>, width: usize, categories: &V
     tv
 }
 
-pub fn new_multipost_view(posts: Vec<Post>) -> LinearLayout {
+pub fn new_multipost_view(posts: Vec<Post>) -> ScrollView<LinearLayout> {
     let mut lin = LinearLayout::vertical();
     for post in posts {
         lin.add_child(PostView::new(post))
     }
-    lin
+    ScrollView::new(lin)
 } 
 
 pub struct PostView {

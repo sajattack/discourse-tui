@@ -228,7 +228,7 @@ pub struct Post {
     pub staff: bool,
     pub user_id: i32,
     pub hidden: bool,
-    pub hidden_reason_id: Value,
+    pub hidden_reason_id: Option<Value>,
     pub trust_level: i32,
     pub deleted_at: Value,
     pub user_deleted: bool,

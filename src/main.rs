@@ -89,7 +89,7 @@ fn main() {
 fn run_with_api(api: Api) {
     let api = Arc::new(api);
     let config_dir =  app_dir(AppDataType::UserConfig, &APP_INFO, "").unwrap();
-    let mut siv = Cursive::new();
+    let mut siv = Cursive::ncurses();
     siv.load_theme_file(config_dir.as_path().join("theme.toml"));
     siv.add_global_callback('q', |s| s.quit());
     siv.add_fullscreen_layer(LinearLayout::vertical()
@@ -119,8 +119,8 @@ fn run_with_api(api: Api) {
                 let api = Arc::clone(&api_copy);
                 let topic = api.get_topic_by_id(lt.id).unwrap();
                 let posts: Vec<Post>;
-                if topic.posts_count > 3 {
-                    posts = api.get_posts_in_topic(&topic, topic.posts_count-3, 3).unwrap();
+                if topic.posts_count > 10 {
+                    posts = api.get_posts_in_topic(&topic, topic.posts_count-25, 25).unwrap();
                 } else {
                     posts = api.get_posts_in_topic(&topic, 0, topic.posts_count).unwrap()
                 }
@@ -136,7 +136,7 @@ fn run_with_api(api: Api) {
                             .button("Reply", move |s_| {
                                 let text_area: ViewRef<TextArea> = s_.find_id("text_area").unwrap();
                                 api.make_post_in_topic(topic_id, text_area.get_content().to_string());
-                                s_.pop_layer()
+                                s_.pop_layer();
                             })
                             .dismiss_button("Cancel"));
                     });
