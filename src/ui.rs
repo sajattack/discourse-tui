@@ -30,7 +30,9 @@ pub fn new_multipost_view(posts: Vec<Post>) -> ScrollView<LinearLayout> {
     for post in posts {
         lin.add_child(PostView::new(post))
     }
-    ScrollView::new(lin)
+    let mut scroll = ScrollView::new(lin);
+    scroll.scroll_to_bottom();
+    scroll
 } 
 
 pub struct PostView {

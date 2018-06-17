@@ -34,7 +34,6 @@ use std::env;
 use std::fs;
 use std::fs::File;
 use std::thread;
-use std::sync::mpsc;
 use std::sync::Arc;
 use std::rc::Rc;
 use std::path::Path;
@@ -101,7 +100,7 @@ fn run_with_api(api: Api) {
         .with_id("main_layout")
         );
     siv.set_fps(10);
-    let cb_sink = mpsc::Sender::clone(&siv.cb_sink());
+    let cb_sink = siv.cb_sink().clone();
     let api_copy = Arc::clone(&api);
     let io_thread = thread::spawn(move || {
         let api = api_copy;
@@ -119,7 +118,7 @@ fn run_with_api(api: Api) {
                 let api = Arc::clone(&api_copy);
                 let topic = api.get_topic_by_id(lt.id).unwrap();
                 let posts: Vec<Post>;
-                if topic.posts_count > 10 {
+                if topic.posts_count > 25 {
                     posts = api.get_posts_in_topic(&topic, topic.posts_count-25, 25).unwrap();
                 } else {
                     posts = api.get_posts_in_topic(&topic, 0, topic.posts_count).unwrap()
@@ -127,6 +126,10 @@ fn run_with_api(api: Api) {
                 let mut topic_view = OnEventView::new(LinearLayout::vertical());
                 topic_view.get_inner_mut().add_child(TextView::new(topic.title.clone()));
                 topic_view.get_inner_mut().add_child(ui::new_multipost_view(posts));
+                {
+                    let scroll: &mut ScrollView<LinearLayout> = topic_view.get_inner_mut().get_child_mut(1).unwrap().as_any_mut().downcast_mut().unwrap();
+                    scroll.scroll_to_bottom();
+                }
                 let api_copy = Arc::clone(&api);
                 if api.has_key() {
                     topic_view.set_on_event('r', move |s| {
